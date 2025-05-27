@@ -22,7 +22,7 @@
     const output = document.getElementById('output');
 
     function convert(value) {
-      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/([^\/]+)\/(services)\/([^@]+)(@sha256:[a-fA-F0-9]{64})?$/;
+      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/(.+)\/(services)\/([^@]+)(@sha256:[a-fA-F0-9]{64})?$/;
       const trimmed = value.trim();
 
       const match = trimmed.match(regex);
