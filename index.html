@@ -2,17 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Docker Image URL Converter</title>
+  <title>Docker URL Converter</title>
   <style>
     body { font-family: sans-serif; max-width: 800px; margin: 2em auto; }
-    input, pre { width: 100%; padding: 0.5em; margin-top: 1em; }
+    input, pre { width: 100%; padding: 0.5em; margin-top: 1em; font-size: 1em; }
     pre { background: #f0f0f0; white-space: pre-wrap; }
+    label { font-weight: bold; margin-top: 1em; display: block; }
   </style>
 </head>
 <body>
   <h2>GCR to Artifact Registry URL Converter</h2>
   <label for="input">Paste old GCR URL:</label>
-  <input type="text" id="input" placeholder="gcr.io/..." />
+  <input type="text" id="input" value="gcr.io/securitydam-sdcc/sdcc-services/feature/csp-184/services/system@sha256:576b74420c9868e99fa8d09338ff5c71b16f38c4994d62adeda858b31253839a" />
   <label for="output">Converted Artifact Registry URL:</label>
   <pre id="output"></pre>
 
@@ -20,23 +21,29 @@
     const input = document.getElementById('input');
     const output = document.getElementById('output');
 
-    input.addEventListener('input', () => {
-      const value = input.value.trim();
-      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/([^\/]+)\/(services)\/([^@]+)(@sha256:[a-f0-9]{64})$/;
+    function convert(value) {
+      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/([^\/]+)\/(services)\/([^@]+)(@sha256:[a-f0-9]{64})?$/;
       const match = value.match(regex);
 
       if (match) {
         const branch = match[1];
         const type = match[2];
         const name = match[3];
-        const digest = match[4];
+        const digest = match[4] || '';
 
-        const converted = `us-docker.pkg.dev/securitydam-sdcc/gcr.io/sdcc-services/${branch}/${type}/${name}${digest}`;
-        output.textContent = converted;
+        return `us-docker.pkg.dev/securitydam-sdcc/gcr.io/sdcc-services/${branch}/${type}/${name}${digest}`;
       } else {
-        output.textContent = 'Invalid GCR image format or not matching expected pattern.';
+        return 'Invalid GCR image format or not matching expected pattern.';
       }
-    });
+    }
+
+    function updateOutput() {
+      const result = convert(input.value.trim());
+      output.textContent = result;
+    }
+
+    input.addEventListener('input', updateOutput);
+    updateOutput(); // run once on load
   </script>
 </body>
 </html>
