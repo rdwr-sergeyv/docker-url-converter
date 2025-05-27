@@ -4,46 +4,112 @@
   <meta charset="UTF-8" />
   <title>Docker URL Converter</title>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 2em auto; }
-    input, pre { width: 100%; padding: 0.5em; margin-top: 1em; font-size: 1em; }
-    pre { background: #f0f0f0; white-space: pre-wrap; }
-    label { font-weight: bold; margin-top: 1em; display: block; }
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 2em auto;
+    }
+    input, pre {
+      width: 100%;
+      padding: 0.5em;
+      font-size: 1em;
+      margin-top: 0.5em;
+      box-sizing: border-box;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 1em;
+      display: block;
+    }
+    .output-container {
+      position: relative;
+      margin-top: 1em;
+    }
+    #output {
+      background: #f0f0f0;
+      white-space: pre-wrap;
+      padding: 0.5em;
+      font-family: monospace;
+    }
+    .copy-button {
+      position: absolute;
+      top: 0.3em;
+      right: 0.3em;
+      font-size: 0.9em;
+      padding: 0.2em 0.6em;
+      cursor: pointer;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      border-radius: 4px;
+    }
+    .copy-button:active {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
   <h2>GCR to Artifact Registry URL Converter</h2>
-  <label for="input">Paste old GCR URL:</label>
-  <input type="text" id="input" value="gcr.io/securitydam-sdcc/sdcc-services/feature/csp-184/services/system@sha256:576b74420c9868e99fa8d09338ff5c71b16f38c4994d62adeda858b31253839a" />
-  <label for="output">Converted Artifact Registry URL:</label>
-  <pre id="output"></pre>
+
+  <label for="urlInput">GCR URL (without or with digest):</label>
+  <input type="text" id="urlInput" value="gcr.io/securitydam-sdcc/sdcc-services/feature/csp-184/services/system" />
+
+  <label for="digestInput">Optional digest (e.g. <code>sha256:abcd...</code>):</label>
+  <input type="text" id="digestInput" placeholder="sha256:..." />
+
+  <div class="output-container">
+    <label for="output">Converted Artifact Registry URL:</label>
+    <pre id="output"></pre>
+    <button class="copy-button" onclick="copyOutput()">Copy</button>
+  </div>
 
   <script>
-    const input = document.getElementById('input');
+    const urlInput = document.getElementById('urlInput');
+    const digestInput = document.getElementById('digestInput');
     const output = document.getElementById('output');
+    const copyButton = document.querySelector('.copy-button');
 
-    function convert(value) {
+    function convert() {
+      const url = urlInput.value.trim();
+      const digestOverride = digestInput.value.trim().replace(/^@?/, '').replace(/^sha256:/, '');
       const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/(.+)\/(services)\/([^@]+)(@sha256:[a-fA-F0-9]{64})?$/;
-      const trimmed = value.trim();
+      const match = url.match(regex);
 
-      const match = trimmed.match(regex);
-      if (match) {
-        const branch = match[1];
-        const type = match[2];
-        const name = match[3];
-        const digest = match[4] || '';
-
-        return `us-docker.pkg.dev/securitydam-sdcc/gcr.io/sdcc-services/${branch}/${type}/${name}${digest}`;
-      } else {
-        return 'Invalid GCR image format or not matching expected pattern.';
+      if (!match) {
+        output.textContent = 'Invalid GCR image format or not matching expected pattern.';
+        return;
       }
+
+      const branch = match[1];
+      const type = match[2];
+      const name = match[3];
+      const digestInUrl = match[4] || '';
+
+      let digest = '';
+      if (digestInUrl) {
+        digest = digestInUrl;
+      } else if (digestOverride.length === 64) {
+        digest = '@sha256:' + digestOverride;
+      }
+
+      const converted = `us-docker.pkg.dev/securitydam-sdcc/gcr.io/sdcc-services/${branch}/${type}/${name}${digest}`;
+      output.textContent = converted;
     }
 
-    function updateOutput() {
-      output.textContent = convert(input.value);
+    function copyOutput() {
+      const text = output.textContent;
+      if (!text || text.startsWith("Invalid")) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const original = copyButton.textContent;
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => copyButton.textContent = original, 1500);
+      });
     }
 
-    input.addEventListener('input', updateOutput);
-    updateOutput(); // run once on load
+    urlInput.addEventListener('input', convert);
+    digestInput.addEventListener('input', convert);
+    convert(); // Run on load
   </script>
 </body>
 </html>
