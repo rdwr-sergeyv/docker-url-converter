@@ -22,9 +22,10 @@
     const output = document.getElementById('output');
 
     function convert(value) {
-      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/([^\/]+)\/(services)\/([^@]+)(@sha256:[a-f0-9]{64})?$/;
-      const match = value.match(regex);
+      const regex = /^gcr\.io\/securitydam-sdcc\/sdcc-services\/([^\/]+)\/(services)\/([^@]+)(@sha256:[a-fA-F0-9]{64})?$/;
+      const trimmed = value.trim();
 
+      const match = trimmed.match(regex);
       if (match) {
         const branch = match[1];
         const type = match[2];
@@ -38,8 +39,7 @@
     }
 
     function updateOutput() {
-      const result = convert(input.value.trim());
-      output.textContent = result;
+      output.textContent = convert(input.value);
     }
 
     input.addEventListener('input', updateOutput);
